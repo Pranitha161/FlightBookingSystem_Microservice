@@ -11,6 +11,7 @@ import com.flightapp.demo.entity.Flight;
 import com.flightapp.demo.entity.SearchRequest;
 import com.flightapp.demo.repository.AirLineRepository;
 import com.flightapp.demo.repository.FlightRepository;
+import com.flightapp.demo.service.AirLineService;
 import com.flightapp.demo.service.FlightService;
 import com.flightapp.demo.service.SeatService;
 
@@ -25,6 +26,7 @@ public class FlightServiceImplementation implements FlightService {
 	private final FlightRepository flightRepo;
 	private final AirLineRepository airlineRepo;
 	private final SeatService seatService;
+	private final AirLineService airlineService;
 
 	@Override // Mono because we want to send only one https response for entire request
 	public Mono<ResponseEntity<List<Flight>>> search(SearchRequest searchRequest) {
@@ -43,6 +45,7 @@ public class FlightServiceImplementation implements FlightService {
 	    return airlineRepo.findById(flight.getAirlineId()) 
 	            .flatMap(existingAirline -> flightRepo.save(flight)
 	                .flatMap(savedFlight -> seatService.initialiszeSeats(savedFlight.getId(), rows, cols)
+	                		.then(airlineService.addFlightToAirline(savedFlight.getAirlineId(), savedFlight.getId()))
 	                    .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).<Void>build())))
 	            )
 	            .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).<Void>build()));
