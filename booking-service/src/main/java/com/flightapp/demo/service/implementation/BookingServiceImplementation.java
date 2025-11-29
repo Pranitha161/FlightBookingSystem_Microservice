@@ -22,47 +22,75 @@ import reactor.core.publisher.Mono;
 public class BookingServiceImplementation implements BookingService {
 	private final BookingRepository bookingRepo;
 //	private final SeatRepository seatRepo;
-//	private final FlightRepository flightRepo;
+	private final FlightRepository flightRepo;
 //	private final PassengerRepository passengerRepo;
-	public Mono<ResponseEntity<Booking>> getTicketsByPnr(String pnr) {
-		return bookingRepo.findByPnr(pnr).map(ResponseEntity::ok).switchIfEmpty(Mono.just(ResponseEntity.notFound().<Booking>build()));
+	public ResponseEntity<Booking> getTicketsByPnr(String pnr) {
+		return bookingRepo.findByPnr(pnr).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().<Booking>build());
 	}
 
-	public Mono<ResponseEntity<Booking>> getBookingsByEmail(String email) {
-		return bookingRepo.findByEmail(email).map(ResponseEntity::ok).switchIfEmpty(Mono.just(ResponseEntity.notFound().<Booking>build()));
+	public ResponseEntity<Booking> getBookingsByEmail(String email) {
+		return bookingRepo.findByEmail(email).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().<Booking>build());
 		//Sonar cloud maintainability recommendation lambda to reference
 	}
 
-	public Mono<ResponseEntity<Void>> deleteBookingByPnr(String pnr) {
-		return bookingRepo.findByPnr(pnr).flatMap(
-				booking -> bookingRepo.delete(booking).then(Mono.just(ResponseEntity.noContent().<Void>build())))
-				.defaultIfEmpty(ResponseEntity.notFound().build());
+	public ResponseEntity<Void> deleteBookingByPnr(String pnr) {
+	    return bookingRepo.findByPnr(pnr)
+	        .map(booking -> {
+	            bookingRepo.delete(booking);  
+	            return ResponseEntity.noContent().<Void>build();
+	        })
+	        .orElse(ResponseEntity.notFound().build());
 	}
 
-	public Mono<ResponseEntity<Void>> bookTicket(String flightId, Booking booking) {
-		return flightRepo.findById(flightId)
-				.flatMap(flight -> seatRepo.findByFlightId(flightId).collectList().flatMap(seats -> {
-					List<String> seatReq = booking.getSeatNumbers();
-					for (String req : seatReq) {
-						Seat seat = seats.stream().filter(s -> s.getSeatNumber().equals(req)).findFirst().orElse(null);
-						if (seat == null || !seat.isAvailable()) {
-							return Mono.just(ResponseEntity.notFound().<Void>build());
-						}
-					}
-					seats.stream().filter(s -> seatReq.contains(s.getSeatNumber())).forEach(s -> s.setAvailable(false));
-					booking.setPnr(flight.getId() + "-" +
-                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"))
-);
-					float price = booking.getTripType().equals("ROUND_TRIP")
-	                        ? flight.getPrice().getRoundTrip()
-	                        : flight.getPrice().getOneWay();
-					booking.setTotalAmount(price);
-					booking.setFlightId(flightId);
-					flight.setAvailableSeats(flight.getAvailableSeats() - seatReq.size());
-					
-					return flightRepo.save(flight).thenMany(seatRepo.saveAll(seats)).thenMany(passengerRepo.saveAll(booking.getPassengers())).then(bookingRepo.save(booking))
-							.thenReturn(ResponseEntity.status(HttpStatus.CREATED).<Void>build());
-				})).switchIfEmpty(Mono.just(ResponseEntity.badRequest().<Void>build()));
+
+	public ResponseEntity<Void> bookTicket(String flightId, Booking booking) {
+	    return flightRepo.findById(flightId)
+	        .map(flight -> {
+	            // Fetch seats synchronously
+	            List<Seat> seats = seatRepo.findByFlightId(flightId);
+	            List<String> seatReq = booking.getSeatNumbers();
+
+	            // Validate requested seats
+	            for (String req : seatReq) {
+	                Seat seat = seats.stream()
+	                    .filter(s -> s.getSeatNumber().equals(req))
+	                    .findFirst()
+	                    .orElse(null);
+
+	                if (seat == null || !seat.isAvailable()) {
+	                    return ResponseEntity.notFound().build();
+	                }
+	            }
+
+	            // Mark seats unavailable
+	            seats.stream()
+	                .filter(s -> seatReq.contains(s.getSeatNumber()))
+	                .forEach(s -> s.setAvailable(false));
+
+	            // Generate PNR
+	            booking.setPnr(flight.getId() + "-" +
+	                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss")));
+
+	            // Calculate price
+	            float price = booking.getTripType().equals("ROUND_TRIP")
+	                ? flight.getPrice().getRoundTrip()
+	                : flight.getPrice().getOneWay();
+	            booking.setTotalAmount(price);
+	            booking.setFlightId(flightId);
+
+	            // Update available seats
+	            flight.setAvailableSeats(flight.getAvailableSeats() - seatReq.size());
+
+	            // Save synchronously
+	            flightRepo.save(flight);
+	            seatRepo.saveAll(seats);
+	            passengerRepo.saveAll(booking.getPassengers());
+	            bookingRepo.save(booking);
+
+	            return ResponseEntity.status(HttpStatus.CREATED).build();
+	        })
+	        .orElse(ResponseEntity.badRequest().build()); // handles missing flight
 	}
+
 }
 

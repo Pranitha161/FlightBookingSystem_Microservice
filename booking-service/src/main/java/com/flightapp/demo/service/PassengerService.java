@@ -4,17 +4,16 @@ import org.springframework.http.ResponseEntity;
 
 import com.flightapp.demo.entity.Passenger;
 
-import reactor.core.publisher.Mono;
-
 public interface PassengerService {
-	Mono<ResponseEntity<Passenger>> getPassengerById(String passengerId);
+	
+	ResponseEntity<Passenger> getPassengerById(String passengerId);
 
-	Mono<ResponseEntity<Passenger>> getPassengerByEmail(String email);
+	ResponseEntity<Passenger> getPassengerByEmail(String email);
 
-	Mono<ResponseEntity<Void>> savePassenger(Passenger passenger);
+	ResponseEntity<Void> savePassenger(Passenger passenger);
 
-	Mono<ResponseEntity<Passenger>> updateById(String id, Passenger passenger);
+	ResponseEntity<Passenger> updateById(String id, Passenger passenger);
 
-	Mono<ResponseEntity<Void>> deleteById(String passengerId);
+	ResponseEntity<Void> deleteById(String passengerId);
 
 }
