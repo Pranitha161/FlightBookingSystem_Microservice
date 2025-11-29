@@ -10,5 +10,6 @@ public interface AirLineService {
 
 	Mono<Airline> getById(String name);
 
-}
+	Mono<Airline> addFlightToAirline(String airlineId, String flightId);
 
+}
