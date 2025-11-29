@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 public interface FlightService {
 	Mono<ResponseEntity<List<Flight>>> search(SearchRequest searchRequest);
 
-//	Mono<ResponseEntity<Void>> addFlight(Flight flight);
+	Mono<ResponseEntity<Void>> addFlight(Flight flight);
 
 	Flux<Flight> getFlights();
 

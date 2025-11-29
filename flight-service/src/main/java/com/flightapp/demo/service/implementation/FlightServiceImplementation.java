@@ -9,9 +9,10 @@ import org.springframework.stereotype.Service;
 
 import com.flightapp.demo.entity.Flight;
 import com.flightapp.demo.entity.SearchRequest;
-import com.flightapp.demo.feign.AirlineClient;
+import com.flightapp.demo.repository.AirLineRepository;
 import com.flightapp.demo.repository.FlightRepository;
 import com.flightapp.demo.service.FlightService;
+import com.flightapp.demo.service.SeatService;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
@@ -22,8 +23,8 @@ import reactor.core.publisher.Mono;
 public class FlightServiceImplementation implements FlightService {
 
 	private final FlightRepository flightRepo;
-//	private final AirlineClient airlineClient;
-//	private final Seatservice seatService;
+	private final AirLineRepository airlineRepo;
+	private final SeatService seatService;
 
 	@Override // Mono because we want to send only one https response for entire request
 	public Mono<ResponseEntity<List<Flight>>> search(SearchRequest searchRequest) {
@@ -32,19 +33,21 @@ public class FlightServiceImplementation implements FlightService {
 				.map(list -> list.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(list));
 	}
 
-//	@Override
-//	public Mono<ResponseEntity<Void>> addFlight(Flight flight) {
-//	    final int cols = 6;
-//	    if (flight.getAvailableSeats() <= 0 || flight.getAvailableSeats() % cols != 0) {
-//	        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).<Void>build());
-//	    }
-//	    final int rows = flight.getAvailableSeats() / cols;
-//	    return airlineClient.getAirlineById(flight.getAirlineId()) 
-//	            .flatMap(existingAirline -> flightRepo.save(flight)
-//	                .flatMap(savedFlight -> seatService.initialiszeSeats(savedFlight.getId(), rows, cols)
-//	                    .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).<Void>build()))))
-//	            .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).<Void>build()));
-//	}
+	@Override
+	public Mono<ResponseEntity<Void>> addFlight(Flight flight) {
+	    final int cols = 6;
+	    if (flight.getAvailableSeats() <= 0 || flight.getAvailableSeats() % cols != 0) {
+	        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).<Void>build());
+	    }
+	    final int rows = flight.getAvailableSeats() / cols;
+	    return airlineRepo.findById(flight.getAirlineId()) 
+	            .flatMap(existingAirline -> flightRepo.save(flight)
+	                .flatMap(savedFlight -> seatService.initialiszeSeats(savedFlight.getId(), rows, cols)
+	                    .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).<Void>build())))
+	            )
+	            .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).<Void>build()));
+		
+	}
 
 
 	@Override
