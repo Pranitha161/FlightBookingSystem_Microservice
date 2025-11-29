@@ -16,8 +16,6 @@ import com.flightapp.demo.service.FlightService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,21 +24,21 @@ public class FlightController {
 	private final FlightService flightService;
 
 	@PostMapping("/search")
-	public Mono<ResponseEntity<List<Flight>>> searchFlight(@RequestBody SearchRequest searchRequest) {
+	public ResponseEntity<List<Flight>> searchFlight(@RequestBody SearchRequest searchRequest) {
 		return flightService.search(searchRequest);
 	}
 	@PostMapping("/add")
-	public  Mono<ResponseEntity<Void>> addInventory(@Valid @RequestBody Flight flight){
+	public  ResponseEntity<Void> addInventory(@Valid @RequestBody Flight flight){
 		return flightService.addFlight(flight);
 	}
 
 	@GetMapping("/get/{flightId}")
-	public Mono<ResponseEntity<Flight>> getFlight(@PathVariable String flightId) {
+	public ResponseEntity<Flight> getFlight(@PathVariable String flightId) {
 		return flightService.getFlightById(flightId);
 	}
 
 	@GetMapping("/get/flights")
-	public Flux<Flight> getAllFlights() {
+	public List<Flight> getAllFlights() {
 		return flightService.getFlights();
 	}
 }

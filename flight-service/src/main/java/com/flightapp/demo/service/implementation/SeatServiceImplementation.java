@@ -10,14 +10,13 @@ import com.flightapp.demo.repository.SeatRepository;
 import com.flightapp.demo.service.SeatService;
 
 import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Flux;
 
 @Service
 @RequiredArgsConstructor
 public class SeatServiceImplementation implements SeatService {
 	private final SeatRepository seatRepo;
 
-	public Flux<Seat> initialiszeSeats(String flightId, int rows, int cols) {
+	public List<Seat> initialiszeSeats(String flightId, int rows, int cols) {
 		char[] seatLetters = { 'A', 'B', 'C', 'D', 'E', 'F' };
 		List<Seat> seats = new ArrayList<>();
 		for (int row = 1; row <= rows; row++) {

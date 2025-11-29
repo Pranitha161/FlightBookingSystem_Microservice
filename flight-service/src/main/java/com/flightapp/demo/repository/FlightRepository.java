@@ -1,13 +1,13 @@
 package com.flightapp.demo.repository;
 
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import java.util.List;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
 
 import com.flightapp.demo.entity.Flight;
 
-import reactor.core.publisher.Flux;
+public interface FlightRepository extends MongoRepository<Flight, String> {
+	List<Flight> getFightByFromPlaceAndToPlace(String fromPlace, String toPlace);
 
-public interface FlightRepository extends ReactiveMongoRepository<Flight, String> {
-	Flux<Flight> getFightByFromPlaceAndToPlace(String fromPlace, String toPlace);
-
-	Flux<Flight> getByAirlineId(String airlineId);
+	List<Flight> getByAirlineId(String airlineId);
 }

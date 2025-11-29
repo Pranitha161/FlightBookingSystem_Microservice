@@ -1,5 +1,8 @@
 package com.flightapp.demo.controller;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,12 +24,12 @@ public class AirLineController {
 	private final AirLineService airlineService;
 
 	@GetMapping("/get")
-	public Flux<Airline> getAirlines() {
+	public List<Airline> getAirlines() {
 		return airlineService.getAllAirlines();
 	}
 
 	@GetMapping("/get/{id}")
-	public Mono<Airline> addAirline(@Valid @PathVariable String id) {
+	public Optional<Airline> getAirlineById(@Valid @PathVariable String id) {
 		return airlineService.getById(id);
 	}
 

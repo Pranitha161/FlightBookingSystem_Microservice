@@ -1,15 +1,15 @@
 package com.flightapp.demo.service;
 
+import java.util.List;
+import java.util.Optional;
+
 import com.flightapp.demo.entity.Airline;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 public interface AirLineService {
-	Flux<Airline> getAllAirlines();
+	List<Airline> getAllAirlines();
 
-	Mono<Airline> getById(String name);
+	Optional<Airline> getById(String name);
 
-	Mono<Airline> addFlightToAirline(String airlineId, String flightId);
+	Optional<Airline> addFlightToAirline(String airlineId, String flightId);
 
 }

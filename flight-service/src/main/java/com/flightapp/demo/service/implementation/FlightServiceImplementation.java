@@ -2,6 +2,7 @@ package com.flightapp.demo.service.implementation;
 
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +17,6 @@ import com.flightapp.demo.service.FlightService;
 import com.flightapp.demo.service.SeatService;
 
 import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -29,38 +28,49 @@ public class FlightServiceImplementation implements FlightService {
 	private final AirLineService airlineService;
 
 	@Override // Mono because we want to send only one https response for entire request
-	public Mono<ResponseEntity<List<Flight>>> search(SearchRequest searchRequest) {
-		return flightRepo.getFightByFromPlaceAndToPlace(searchRequest.getFromPlace(), searchRequest.getToPlace())
-				.filter(flight -> flight.getArrivalTime().toLocalDate().equals(searchRequest.getDate())).collectList()
-				.map(list -> list.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(list));
+	public ResponseEntity<List<Flight>> search(SearchRequest searchRequest) {
+	    List<Flight> flights = flightRepo.getFightByFromPlaceAndToPlace(
+	            searchRequest.getFromPlace(),
+	            searchRequest.getToPlace()
+	    );
+
+	    List<Flight> filtered = flights.stream()
+	        .filter(flight -> flight.getArrivalTime().toLocalDate().equals(searchRequest.getDate()))
+	        .collect(Collectors.toList());
+
+	    if (filtered.isEmpty()) {
+	        return ResponseEntity.noContent().build();
+	    } else {
+	        return ResponseEntity.ok(filtered);
+	    }
 	}
 
 	@Override
-	public Mono<ResponseEntity<Void>> addFlight(Flight flight) {
+	public ResponseEntity<Void> addFlight(Flight flight) {
 	    final int cols = 6;
 	    if (flight.getAvailableSeats() <= 0 || flight.getAvailableSeats() % cols != 0) {
-	        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).<Void>build());
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 	    }
 	    final int rows = flight.getAvailableSeats() / cols;
-	    return airlineRepo.findById(flight.getAirlineId()) 
-	            .flatMap(existingAirline -> flightRepo.save(flight)
-	                .flatMap(savedFlight -> seatService.initialiszeSeats(savedFlight.getId(), rows, cols)
-	                		.then(airlineService.addFlightToAirline(savedFlight.getAirlineId(), savedFlight.getId()))
-	                    .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).<Void>build())))
-	            )
-	            .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).<Void>build()));
-		
+	    return airlineRepo.findById(flight.getAirlineId())
+	        .map(existingAirline -> {
+	            Flight savedFlight = flightRepo.save(flight);
+	            seatService.initialiszeSeats(savedFlight.getId(), rows, cols);
+	            airlineService.addFlightToAirline(savedFlight.getAirlineId(), savedFlight.getId());
+	            return ResponseEntity.status(HttpStatus.CREATED).<Void>build();
+	        })
+	        .orElse(ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
 	}
 
 
 	@Override
-	public Flux<Flight> getFlights() {
+	public List<Flight> getFlights() {
 		return flightRepo.findAll();
 	}
 
 	@Override
-	public Mono<ResponseEntity<Flight>> getFlightById(String flightId) {
+	public ResponseEntity<Flight> getFlightById(String flightId) {
 		return flightRepo.findById(flightId).map(ResponseEntity::ok)
-				.switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+				.orElse(ResponseEntity.notFound().<Flight>build());
 	}
 }

@@ -1,11 +1,11 @@
 package com.flightapp.demo.repository;
 
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import java.util.Optional;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
 
 import com.flightapp.demo.entity.Airline;
 
-import reactor.core.publisher.Mono;
-
-public interface AirLineRepository extends ReactiveMongoRepository<Airline, String> {
-	Mono<Airline> findById(String name);
+public interface AirLineRepository extends MongoRepository<Airline, String> {
+	Optional<Airline> findById(String name);
 }
