@@ -1,7 +1,5 @@
 package com.flightapp.demo.service.implementation;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.flightapp.demo.entity.Airline;
@@ -21,10 +19,8 @@ public class AirLineServiceImplementation implements AirLineService {
 		return airlineRepo.findAll();
 	}
 
-	public Mono<ResponseEntity<Void>> addAirline(Airline airline) {
-		return airlineRepo.findByName(airline.getName())
-				.flatMap(existing -> Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).<Void>build()))
-				.switchIfEmpty(airlineRepo.save(airline)
-						.map(saved -> ResponseEntity.status(HttpStatus.CREATED).<Void>build()));
+	public Mono<Airline> getById(String id) {
+		return airlineRepo.findById(id);
 	}
+
 }

@@ -1,9 +1,7 @@
 package com.flightapp.demo.controller;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,9 +25,9 @@ public class AirLineController {
 		return airlineService.getAllAirlines();
 	}
 
-	@PostMapping("/add")
-	public Mono<ResponseEntity<Void>> addAirline(@Valid @RequestBody Airline airline) {
-		return airlineService.addAirline(airline);
+	@GetMapping("/get/{id}")
+	public Mono<Airline> addAirline(@Valid @PathVariable String id) {
+		return airlineService.getById(id);
 	}
 
 }
