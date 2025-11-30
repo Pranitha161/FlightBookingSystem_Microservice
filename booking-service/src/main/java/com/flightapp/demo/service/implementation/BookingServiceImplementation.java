@@ -19,6 +19,7 @@ import com.flightapp.demo.repository.PassengerRepository;
 import com.flightapp.demo.service.BookingService;
 
 import feign.FeignException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -37,7 +38,7 @@ public class BookingServiceImplementation implements BookingService {
 				.orElse(ResponseEntity.notFound().<Booking>build());
 		// Sonar cloud maintainability recommendation lambda to reference
 	}
-
+	 @CircuitBreaker(name = "flightServiceCircuitBreaker", fallbackMethod = "fallbackFlight")
 	public ResponseEntity<String> deleteBookingByPnr(String pnr) {
 		return bookingRepo.findByPnr(pnr).map(booking -> {
 			try {
@@ -67,7 +68,11 @@ public class BookingServiceImplementation implements BookingService {
 			}
 		}).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Booking not found "));
 	}
-
+	 public ResponseEntity<String> fallbackFlight(String flightId, Throwable t) {
+	        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+	                             .body("Flight service is currently unavailable for flightId: " + flightId);
+	    }
+	 @CircuitBreaker(name = "flightServiceCircuitBreaker", fallbackMethod = "fallbackFlight")
 	public ResponseEntity<String> bookTicket(String flightId, Booking booking) {
 		Flight flight;
 		List<Seat> seats;
