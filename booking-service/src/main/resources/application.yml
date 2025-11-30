@@ -4,7 +4,7 @@ spring:
 resilience4j:
   circuitbreaker:
     instances:
-      questionServiceCircuitBreaker:
+      flightServiceCircuitBreaker:
         slidingWindowSize: 10
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
