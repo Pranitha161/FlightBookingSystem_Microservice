@@ -15,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SeatServiceImplementation implements SeatService {
 	private final SeatRepository seatRepo;
-
+	public List<Seat> getSeatsByFlightId(String flightId) {
+        return seatRepo.findByFlightId(flightId);
+    }
 	public List<Seat> initialiszeSeats(String flightId, int rows, int cols) {
 		char[] seatLetters = { 'A', 'B', 'C', 'D', 'E', 'F' };
 		List<Seat> seats = new ArrayList<>();
@@ -30,4 +32,12 @@ public class SeatServiceImplementation implements SeatService {
 		}
 		return seatRepo.saveAll(seats);
 	}
+	public boolean updateSeats(String flightId, List<Seat> seats) {
+        if (seatRepo.findByFlightId(flightId).isEmpty()) {
+            return false;
+        }
+        seats.forEach(seat -> seat.setFlightId(flightId));
+        seatRepo.saveAll(seats);
+        return true;
+    }
 }

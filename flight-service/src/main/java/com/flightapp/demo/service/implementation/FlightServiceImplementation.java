@@ -73,4 +73,19 @@ public class FlightServiceImplementation implements FlightService {
 		return flightRepo.findById(flightId).map(ResponseEntity::ok)
 				.orElse(ResponseEntity.notFound().<Flight>build());
 	}
+
+	@Override
+	public ResponseEntity<Void> updateFlight(String id, Flight flight) {
+		return flightRepo.findById(id).map(existing->{
+			existing.setAirlineId(flight.getAirlineId());
+			existing.setArrivalTime(flight.getArrivalTime());
+			existing.setDepartureTime(flight.getDepartureTime());
+			existing.setPrice(flight.getPrice());
+			flight.setId(id);
+			flightRepo.save(existing);
+			return ResponseEntity.ok().<Void>build();
+		}).orElseGet(()->ResponseEntity.notFound().build());
+                
+    
+	}
 }

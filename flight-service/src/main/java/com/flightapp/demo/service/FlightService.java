@@ -16,5 +16,7 @@ public interface FlightService {
 	List<Flight> getFlights();
 
 	ResponseEntity<Flight> getFlightById(String flightId);
+	
+	ResponseEntity<Void> updateFlight(String id, Flight flight);
 
 }

@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.flightapp.demo.entity.Airline;
 import com.flightapp.demo.repository.AirlineRepository;
@@ -30,8 +33,10 @@ public class AirLineServiceImplementation implements AirLineService {
 	            return airlineRepo.save(airline); 
 	        });
 	}
-	public Optional<Airline> getById(String id) {
-		return airlineRepo.findById(id);
+	public ResponseEntity<Airline> getById(@PathVariable String id) {
+	    return airlineRepo.findById(id)
+	            .map(ResponseEntity::ok)              
+	            .orElseGet(() -> ResponseEntity.notFound().build()); 
 	}
 
 }
