@@ -18,7 +18,6 @@ import com.flightapp.demo.repository.BookingRepository;
 import com.flightapp.demo.repository.PassengerRepository;
 import com.flightapp.demo.service.BookingService;
 
-import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 
@@ -38,76 +37,56 @@ public class BookingServiceImplementation implements BookingService {
 				.orElse(ResponseEntity.notFound().<Booking>build());
 		// Sonar cloud maintainability recommendation lambda to reference
 	}
-	 @CircuitBreaker(name = "flightServiceCircuitBreaker", fallbackMethod = "fallbackFlight")
+
+	@CircuitBreaker(name = "flightServiceCircuitBreaker", fallbackMethod = "fallbackDeleteBooking")
 	public ResponseEntity<String> deleteBookingByPnr(String pnr) {
 		return bookingRepo.findByPnr(pnr).map(booking -> {
-			try {
-				ResponseEntity<Flight> flightResponse = flightClient.getFlightById(booking.getFlightId());
-				if (!flightResponse.getStatusCode().is2xxSuccessful() || flightResponse.getBody() == null) {
-					return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Flight not found for booking PNR: " + pnr);
-				}
-				Flight flight = flightResponse.getBody();
-				ResponseEntity<List<Seat>> seatResponse = flightClient.getSeatsByFlightId(booking.getFlightId());
-				if (!seatResponse.getStatusCode().is2xxSuccessful() || seatResponse.getBody() == null) {
-					return ResponseEntity.status(HttpStatus.NOT_FOUND)
-							.body("Seats not found for flight: " + booking.getFlightId());
-				}
-				List<Seat> seats = seatResponse.getBody();
-				List<String> seatNumbers = booking.getSeatNumbers();
-				seats.stream().filter(s -> seatNumbers.contains(s.getSeatNumber())).forEach(s -> s.setAvailable(true));
-				flight.setAvailableSeats(flight.getAvailableSeats() + seatNumbers.size());
-				flightClient.updateFlight(flight.getId(), flight);
-				flightClient.updateSeats(flight.getId(), seats);
-				bookingRepo.delete(booking);
-
-				return ResponseEntity.status(HttpStatus.OK)
-						.body("Booking with PNR " + pnr + " deleted successfully. Seats released.");
-			} catch (FeignException e) {
-				return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-						.body("Failed to update flight or seats while deleting booking.");
-			}
-		}).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Booking not found "));
-	}
-	 public ResponseEntity<String> fallbackFlight(String flightId, Throwable t) {
-	        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-	                             .body("Flight service is currently unavailable for flightId: " + flightId);
-	    }
-	 @CircuitBreaker(name = "flightServiceCircuitBreaker", fallbackMethod = "fallbackFlight")
-	public ResponseEntity<String> bookTicket(String flightId, Booking booking) {
-		Flight flight;
-		List<Seat> seats;
-		try {
-			ResponseEntity<Flight> flightResponse = flightClient.getFlightById(flightId);
+			ResponseEntity<Flight> flightResponse = flightClient.getFlightById(booking.getFlightId());
 			if (!flightResponse.getStatusCode().is2xxSuccessful() || flightResponse.getBody() == null) {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Flight not found with id: " + flightId);
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Flight not found for booking PNR: " + pnr);
 			}
-			flight = flightResponse.getBody();
-		} catch (FeignException.NotFound e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Flight not found with id: " + flightId);
-		} catch (FeignException e) {
-			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Flight service unavailable");
+			Flight flight = flightResponse.getBody();
+			ResponseEntity<List<Seat>> seatResponse = flightClient.getSeatsByFlightId(booking.getFlightId());
+			if (!seatResponse.getStatusCode().is2xxSuccessful() || seatResponse.getBody() == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND)
+						.body("Seats not found for flight: " + booking.getFlightId());
+			}
+			List<Seat> seats = seatResponse.getBody();
+			List<String> seatNumbers = booking.getSeatNumbers();
+			seats.stream().filter(s -> seatNumbers.contains(s.getSeatNumber())).forEach(s -> s.setAvailable(true));
+			flight.setAvailableSeats(flight.getAvailableSeats() + seatNumbers.size());
+			flightClient.updateFlight(flight.getId(), flight);
+			flightClient.updateSeats(flight.getId(), seats);
+			bookingRepo.delete(booking);
+			return ResponseEntity.ok("Booking with PNR " + pnr + " deleted successfully. Seats released.");
+		}).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Booking not found"));
+	}
+
+	public ResponseEntity<String> fallbackDeleteBooking(String pnr, Throwable t) {
+		if (t instanceof feign.FeignException.NotFound) {
+
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body("Flight not found while deleting booking with PNR: " + pnr);
 		}
 
-		try {
-			ResponseEntity<List<Seat>> seatResponse = flightClient.getSeatsByFlightId(flightId);
-			if (!seatResponse.getStatusCode().is2xxSuccessful() || seatResponse.getBody() == null) {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Seats not found for flight: " + flightId);
-			}
-			seats = seatResponse.getBody();
-		} catch (FeignException.NotFound e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Seats not found for flight: " + flightId);
-		} catch (FeignException e) {
-			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Seat service unavailable");
-		}
+		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+				.body("Flight service unavailable while deleting booking with PNR: " + pnr);
+	}
+
+	@CircuitBreaker(name = "flightServiceCircuitBreaker", fallbackMethod = "fallbackBookTicket")
+	public ResponseEntity<String> bookTicket(String flightId, Booking booking) {
+		Flight flight = flightClient.getFlightById(flightId).getBody();
+		List<Seat> seats = flightClient.getSeatsByFlightId(flightId).getBody();
 
 		List<String> seatReq = booking.getSeatNumbers();
 		if (seatReq == null || seatReq.isEmpty()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No seats requested");
+			return ResponseEntity.badRequest().body("No seats requested");
 		}
+
 		for (String req : seatReq) {
 			Seat seat = seats.stream().filter(s -> s.getSeatNumber().equals(req)).findFirst().orElse(null);
 			if (seat == null || !seat.isAvailable()) {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Seat " + req + " is not available");
+				return ResponseEntity.badRequest().body("Seat " + req + " is not available");
 			}
 		}
 
@@ -120,23 +99,14 @@ public class BookingServiceImplementation implements BookingService {
 		booking.setTotalAmount(price);
 		booking.setFlightId(flightId);
 
-		try {
-			flight.setAvailableSeats(flight.getAvailableSeats() - seatReq.size());
-			flightClient.updateFlight(flightId, flight);
-		} catch (FeignException e) {
-			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Failed to update flight seats");
-		}
-
-		try {
-			flightClient.updateSeats(flightId, seats);
-		} catch (FeignException e) {
-			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Failed to update seat availability");
-		}
+		flight.setAvailableSeats(flight.getAvailableSeats() - seatReq.size());
+		flightClient.updateFlight(flightId, flight);
+		flightClient.updateSeats(flightId, seats);
 
 		if (booking.getPassengerIds() != null && !booking.getPassengerIds().isEmpty()) {
 			List<Passenger> passengers = passengerRepo.findAllById(booking.getPassengerIds());
 			if (passengers.isEmpty()) {
-				return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Passenger IDs invalid");
+				return ResponseEntity.unprocessableEntity().body("Passenger IDs invalid");
 			}
 			passengerRepo.saveAll(passengers);
 		}
@@ -145,6 +115,14 @@ public class BookingServiceImplementation implements BookingService {
 
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.body("Booking created successfully with PNR: " + booking.getPnr());
+	}
+
+	public ResponseEntity<String> fallbackBookTicket(String flightId, Booking booking, Throwable t) {
+		if (t instanceof feign.FeignException.NotFound) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Flight not found with id: " + flightId);
+		}
+		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+				.body("Flight service unavailable while booking flightId: " + flightId);
 	}
 
 }
