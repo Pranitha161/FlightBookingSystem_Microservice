@@ -1,0 +1,29 @@
+package com.flightapp.demo.feign;
+
+import java.util.List;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import com.flightapp.demo.entity.Flight;
+import com.flightapp.demo.entity.Seat;
+
+@FeignClient("flight-service")
+public interface FlightClient {
+	@GetMapping("/get/{flightId}")
+	ResponseEntity<Flight> getFlightById(String flightId);
+
+	@PutMapping("/flights/{id}")
+	ResponseEntity<Void> updateFlight(@PathVariable String id, @RequestBody Flight flight);
+
+	@GetMapping("/seats/flight/{flightId}")
+	ResponseEntity<List<Seat>> getSeatsByFlightId(@PathVariable String flightId);
+
+	@PutMapping("/flights/{id}/seats")
+	ResponseEntity<Void> updateSeats(@PathVariable String flightId,@RequestBody List<Seat> seats);
+
+}
