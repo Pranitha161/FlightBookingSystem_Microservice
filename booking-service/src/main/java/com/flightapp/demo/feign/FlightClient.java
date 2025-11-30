@@ -13,17 +13,18 @@ import com.flightapp.demo.entity.Flight;
 import com.flightapp.demo.entity.Seat;
 
 @FeignClient("flight-service")
+
 public interface FlightClient {
-	@GetMapping("/get/{flightId}")
+	@GetMapping("/api/flight/get/{flightId}")
 	ResponseEntity<Flight> getFlightById(@PathVariable String flightId);
 
-	@PutMapping("/flights/{id}")
+	@PutMapping("/api/flight/flights/{id}")
 	ResponseEntity<Void> updateFlight(@PathVariable String id, @RequestBody Flight flight);
 
-	@GetMapping("/seats/flight/{flightId}")
+	@GetMapping("/api/seats/flight/{flightId}")
 	ResponseEntity<List<Seat>> getSeatsByFlightId(@PathVariable String flightId);
 
-	@PutMapping("/flights/{id}/seats")
+	@PutMapping("/api/seats/flights/{id}/seats")
 	ResponseEntity<Void> updateSeats(@PathVariable String id,@RequestBody List<Seat> seats);
 
 }
