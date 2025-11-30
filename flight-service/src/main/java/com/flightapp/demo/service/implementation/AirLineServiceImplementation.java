@@ -7,7 +7,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.flightapp.demo.entity.Airline;
-import com.flightapp.demo.repository.AirLineRepository;
+import com.flightapp.demo.repository.AirlineRepository;
 import com.flightapp.demo.service.AirLineService;
 
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AirLineServiceImplementation implements AirLineService {
-	private final AirLineRepository airlineRepo;
+	private final AirlineRepository airlineRepo;
 
 	public List<Airline> getAllAirlines() {
 		return airlineRepo.findAll();

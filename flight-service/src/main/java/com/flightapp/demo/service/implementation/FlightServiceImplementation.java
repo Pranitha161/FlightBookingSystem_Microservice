@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.flightapp.demo.entity.Flight;
 import com.flightapp.demo.entity.SearchRequest;
-import com.flightapp.demo.repository.AirLineRepository;
+import com.flightapp.demo.repository.AirlineRepository;
 import com.flightapp.demo.repository.FlightRepository;
 import com.flightapp.demo.service.AirLineService;
 import com.flightapp.demo.service.FlightService;
@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class FlightServiceImplementation implements FlightService {
 
 	private final FlightRepository flightRepo;
-	private final AirLineRepository airlineRepo;
+	private final AirlineRepository airlineRepo;
 	private final SeatService seatService;
 	private final AirLineService airlineService;
 
