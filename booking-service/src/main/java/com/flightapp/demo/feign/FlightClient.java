@@ -15,7 +15,7 @@ import com.flightapp.demo.entity.Seat;
 @FeignClient("flight-service")
 public interface FlightClient {
 	@GetMapping("/get/{flightId}")
-	ResponseEntity<Flight> getFlightById(String flightId);
+	ResponseEntity<Flight> getFlightById(@PathVariable String flightId);
 
 	@PutMapping("/flights/{id}")
 	ResponseEntity<Void> updateFlight(@PathVariable String id, @RequestBody Flight flight);
@@ -24,6 +24,6 @@ public interface FlightClient {
 	ResponseEntity<List<Seat>> getSeatsByFlightId(@PathVariable String flightId);
 
 	@PutMapping("/flights/{id}/seats")
-	ResponseEntity<Void> updateSeats(@PathVariable String flightId,@RequestBody List<Seat> seats);
+	ResponseEntity<Void> updateSeats(@PathVariable String id,@RequestBody List<Seat> seats);
 
 }

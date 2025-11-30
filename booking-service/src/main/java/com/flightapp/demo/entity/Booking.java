@@ -2,6 +2,7 @@ package com.flightapp.demo.entity;
 
 import java.util.List;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.flightapp.demo.enums.MEAL_PREFERENCE;
 import com.flightapp.demo.enums.TRIP_TYPE;
@@ -19,6 +20,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Document(collection = "bookings")
 public class Booking {
 	@Id
 	private String id;

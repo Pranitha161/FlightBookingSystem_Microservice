@@ -11,3 +11,5 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
 
 	Optional<Booking> findByEmail(String email);
 }
+
+
