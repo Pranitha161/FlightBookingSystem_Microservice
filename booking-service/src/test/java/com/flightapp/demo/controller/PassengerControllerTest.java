@@ -36,13 +36,14 @@ public class PassengerControllerTest {
 		mockMvc.perform(get("/api/passenger/get/{passengerId}", "123")).andExpect(status().isOk());
 	}
 
+	
 	@Test
 	void testGetPassengerByIdFailure() throws Exception {
 
 		when(passengerService.getPassengerById("123")).thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
 		mockMvc.perform(get("/api/passenger/get/{passengerId}", "123")).andExpect(status().isNotFound());
 	}
-
+	
 	@Test
 	void testGetPassengerByEmailSuccess() throws Exception {
 		Passenger passenger = new Passenger();
