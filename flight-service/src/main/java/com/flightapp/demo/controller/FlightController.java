@@ -25,7 +25,7 @@ public class FlightController {
 	private final FlightService flightService;
 
 	@PostMapping("/search")
-	public ResponseEntity<List<Flight>> searchFlight(@RequestBody SearchRequest searchRequest) {
+	public ResponseEntity<List<Flight>> searchFlight(@Valid @RequestBody SearchRequest searchRequest) {
 		return flightService.search(searchRequest);
 	}
 	@PostMapping("/add")
@@ -33,7 +33,7 @@ public class FlightController {
 		return flightService.addFlight(flightTest);
 	}
 	@PutMapping("flights/{id}")
-	public ResponseEntity<Void> updateFlight(@PathVariable String id, @RequestBody Flight flightTest){
+	public ResponseEntity<Void> updateFlight(@PathVariable String id,@Valid @RequestBody Flight flightTest){
 		return flightService.updateFlight(id, flightTest);
 	}
 
