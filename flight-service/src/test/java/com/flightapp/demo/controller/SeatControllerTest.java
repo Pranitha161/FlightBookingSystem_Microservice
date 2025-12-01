@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.flightapp.demo.entity.Seat;
 import com.flightapp.demo.service.SeatService;
 @WebMvcTest(SeatController.class)
-public class SeatControllerTest {
+class SeatControllerTest {
 	@Autowired
 	private MockMvc mockMvc;
 

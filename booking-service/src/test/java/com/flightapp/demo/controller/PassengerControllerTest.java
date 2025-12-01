@@ -1,13 +1,18 @@
 package com.flightapp.demo.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -15,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.flightapp.demo.entity.Passenger;
 import com.flightapp.demo.service.PassengerService;
@@ -25,6 +31,8 @@ public class PassengerControllerTest {
 	MockMvc mockMvc;
 	@MockBean
 	private PassengerService passengerService;
+	@InjectMocks
+	private PassengerController passengerController;
 
 	@Test
 	void testGetPassengerByIdSuccess() throws Exception {
@@ -36,14 +44,13 @@ public class PassengerControllerTest {
 		mockMvc.perform(get("/api/passenger/get/{passengerId}", "123")).andExpect(status().isOk());
 	}
 
-	
 	@Test
 	void testGetPassengerByIdFailure() throws Exception {
 
 		when(passengerService.getPassengerById("123")).thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
 		mockMvc.perform(get("/api/passenger/get/{passengerId}", "123")).andExpect(status().isNotFound());
 	}
-	
+
 	@Test
 	void testGetPassengerByEmailSuccess() throws Exception {
 		Passenger passenger = new Passenger();
@@ -100,4 +107,5 @@ public class PassengerControllerTest {
 		mockMvc.perform(delete("/api/passenger/delete/{passengerId}", "123")).andExpect(status().isNotFound());
 	}
 
+	
 }
