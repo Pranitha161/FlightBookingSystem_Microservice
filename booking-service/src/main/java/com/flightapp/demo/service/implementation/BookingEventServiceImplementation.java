@@ -1,24 +1,37 @@
 package com.flightapp.demo.service.implementation;
 
-import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+import com.flightapp.demo.config.RabbitConfig;
 import com.flightapp.demo.entity.Booking;
 import com.flightapp.demo.entity.BookingEvent;
 import com.flightapp.demo.service.BookingEventService;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
-public class BookingEventServiceImplementation implements BookingEventService{
-    private KafkaTemplate<String, BookingEvent> kafkaTemplate;
+@RequiredArgsConstructor
+public class BookingEventServiceImplementation implements BookingEventService {
+
+    private final RabbitTemplate rabbitTemplate;
 
     public void bookingCreated(Booking booking) {
         BookingEvent event = new BookingEvent("BOOKING_CREATED", booking);
-        kafkaTemplate.send("booking-events", event);
+        System.out.println("Publishing event: " + event);
+        rabbitTemplate.convertAndSend(
+            RabbitConfig.EXCHANGE,
+            RabbitConfig.ROUTING_KEY,
+            event
+        );
     }
 
-    public void bookingDeleted(String bookingId) {
-        BookingEvent event = new BookingEvent("BOOKING_DELETED", bookingId);
-        kafkaTemplate.send("booking-events", event);
+    public void bookingDeleted(Booking booking) {
+        BookingEvent event = new BookingEvent("BOOKING_DELETED", booking);
+        rabbitTemplate.convertAndSend(
+            RabbitConfig.EXCHANGE,
+            RabbitConfig.ROUTING_KEY,
+            event
+        );
     }
 }
-
