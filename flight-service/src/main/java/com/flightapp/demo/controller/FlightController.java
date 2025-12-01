@@ -29,12 +29,12 @@ public class FlightController {
 		return flightService.search(searchRequest);
 	}
 	@PostMapping("/add")
-	public  ResponseEntity<Void> addInventory(@Valid @RequestBody Flight flight){
-		return flightService.addFlight(flight);
+	public  ResponseEntity<Void> addInventory(@Valid @RequestBody Flight flightTest){
+		return flightService.addFlight(flightTest);
 	}
 	@PutMapping("flights/{id}")
-	public ResponseEntity<Void> updateFlight(@PathVariable String id, @RequestBody Flight flight){
-		return flightService.updateFlight(id, flight);
+	public ResponseEntity<Void> updateFlight(@PathVariable String id, @RequestBody Flight flightTest){
+		return flightService.updateFlight(id, flightTest);
 	}
 
 	@GetMapping("/get/{flightId}")

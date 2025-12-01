@@ -29,12 +29,12 @@ public class FlightServiceImplementation implements FlightService {
 
 	@Override // Mono because we want to send only one https response for entire request
 	public ResponseEntity<List<Flight>> search(SearchRequest searchRequest) {
-	    List<Flight> flights = flightRepo.getFightByFromPlaceAndToPlace(
+	    List<Flight> flightTests = flightRepo.getFightByFromPlaceAndToPlace(
 	            searchRequest.getFromPlace(),
 	            searchRequest.getToPlace()
 	    );
 
-	    List<Flight> filtered = flights.stream()
+	    List<Flight> filtered = flightTests.stream()
 	        .filter(flight -> flight.getArrivalTime().toLocalDate().equals(searchRequest.getDate()))
 	        .collect(Collectors.toList());
 
@@ -46,15 +46,15 @@ public class FlightServiceImplementation implements FlightService {
 	}
 
 	@Override
-	public ResponseEntity<Void> addFlight(Flight flight) {
+	public ResponseEntity<Void> addFlight(Flight flightTest) {
 	    final int cols = 6;
-	    if (flight.getAvailableSeats() <= 0 || flight.getAvailableSeats() % cols != 0) {
+	    if (flightTest.getAvailableSeats() <= 0 || flightTest.getAvailableSeats() % cols != 0) {
 	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 	    }
-	    final int rows = flight.getAvailableSeats() / cols;
-	    return airlineRepo.findById(flight.getAirlineId())
+	    final int rows = flightTest.getAvailableSeats() / cols;
+	    return airlineRepo.findById(flightTest.getAirlineId())
 	        .map(existingAirline -> {
-	            Flight savedFlight = flightRepo.save(flight);
+	            Flight savedFlight = flightRepo.save(flightTest);
 	            seatService.initialiszeSeats(savedFlight.getId(), rows, cols);
 	            airlineService.addFlightToAirline(savedFlight.getAirlineId(), savedFlight.getId());
 	            return ResponseEntity.status(HttpStatus.CREATED).<Void>build();
@@ -75,13 +75,13 @@ public class FlightServiceImplementation implements FlightService {
 	}
 
 	@Override
-	public ResponseEntity<Void> updateFlight(String id, Flight flight) {
+	public ResponseEntity<Void> updateFlight(String id, Flight flightTest) {
 		return flightRepo.findById(id).map(existing->{
-			existing.setAirlineId(flight.getAirlineId());
-			existing.setArrivalTime(flight.getArrivalTime());
-			existing.setDepartureTime(flight.getDepartureTime());
-			existing.setPrice(flight.getPrice());
-			flight.setId(id);
+			existing.setAirlineId(flightTest.getAirlineId());
+			existing.setArrivalTime(flightTest.getArrivalTime());
+			existing.setDepartureTime(flightTest.getDepartureTime());
+			existing.setPrice(flightTest.getPrice());
+			flightTest.setId(id);
 			flightRepo.save(existing);
 			return ResponseEntity.ok().<Void>build();
 		}).orElseGet(()->ResponseEntity.notFound().build());
