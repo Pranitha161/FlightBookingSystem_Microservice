@@ -1,13 +1,22 @@
 package com.flightapp.demo.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+
 public class BookingEvent {
 	private String type;
-	private Object payload;
+	private Booking booking;
+	private String bookingId; 
+	public BookingEvent() {
+	}
+
+	public BookingEvent(String type, Booking booking) {
+		this.type = type;
+		this.booking = booking;
+	}
+	public BookingEvent(String type, String bookingId) {
+        this.type = type;
+        this.bookingId = bookingId;
+    }
 }

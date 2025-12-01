@@ -6,5 +6,5 @@ public interface BookingEventService {
 	
 	void bookingCreated(Booking booking);
 
-	void bookingDeleted(String bookingId);
+	void bookingDeleted(Booking bookingId);
 }
