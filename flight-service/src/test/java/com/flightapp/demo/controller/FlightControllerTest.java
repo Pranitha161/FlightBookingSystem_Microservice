@@ -35,49 +35,57 @@ class FlightControllerTest {
 	private FlightService flightService;
 
 	@Test
-	void testSearchFlights_Success() throws Exception {
+	void testSearchFlightReturnsFlights() throws Exception {
 		Flight flight = new Flight();
-		flight.setId("1");
-		flight.setFromPlace("Hyderabad");
-		flight.setArrivalTime(LocalDateTime.now());
-		flight.setToPlace("Delhi");
-		SearchRequest sr = new SearchRequest();
-		sr.setDate(LocalDate.now());
-		sr.setFromPlace("Hyderabad");
-		sr.setToPlace("Delhi");
+		flight.setId("FL123");
+
 		when(flightService.search(any(SearchRequest.class))).thenReturn(ResponseEntity.ok(List.of(flight)));
 
 		mockMvc.perform(post("/api/flight/search").contentType(MediaType.APPLICATION_JSON)
-				.content("{\"source\":\"HYD\",\"destination\":\"DEL\"}")).andExpect(status().isOk());
-				
+				.content("{\"fromPlace\":\"HYD\",\"toPlace\":\"DEL\",\"date\":\"2025-12-15\"}"))
+				.andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value("FL123"));
 	}
 
 	@Test
-	void testSearchFlights_Empty() throws Exception {
-		when(flightService.search(any(SearchRequest.class))).thenReturn(ResponseEntity.ok(List.of()));
+	void testSearchFlightNoContent() throws Exception {
+		when(flightService.search(any(SearchRequest.class))).thenReturn(ResponseEntity.noContent().build());
+
 		mockMvc.perform(post("/api/flight/search").contentType(MediaType.APPLICATION_JSON)
-				.content("{\"source\":\"HYD\",\"destination\":\"DEL\"}")).andExpect(status().isOk())
-				.andExpect(jsonPath("$").isEmpty());
+				.content("{\"fromPlace\":\"HYD\",\"toPlace\":\"DEL\",\"date\":\"2025-12-15\"}"))
+				.andExpect(status().isNoContent());
 	}
+
 	@Test
 	void testAddFlight_Invalid() throws Exception {
-		mockMvc.perform(post("/api/flight/add").contentType(MediaType.APPLICATION_JSON).content("{}")) // missing																					// fields
+		mockMvc.perform(post("/api/flight/add").contentType(MediaType.APPLICATION_JSON).content("{}")) // missing //																						// fields
 				.andExpect(status().isBadRequest());
 	}
-	@Test
-	void testUpdateFlight_Success() throws Exception {
-		when(flightService.updateFlight(eq("1"), any(Flight.class))).thenReturn(ResponseEntity.ok().build());
 
-		mockMvc.perform(put("/api/flight/flights/1").contentType(MediaType.APPLICATION_JSON)
-				.content("{\"id\":\"1\",\"name\":\"Indigo\"}")).andExpect(status().isOk());
-	}
 	@Test
-	void testUpdateFlight_NotFound() throws Exception {
-		when(flightService.updateFlight(eq("99"), any(Flight.class))).thenReturn(ResponseEntity.notFound().build());
+	void testUpdateFlightEndpointSuccess() throws Exception {
+	    when(flightService.updateFlight(eq("FL123"), any(Flight.class)))
+	        .thenReturn(ResponseEntity.ok().build());
 
-		mockMvc.perform(put("/api/flight/flights/99").contentType(MediaType.APPLICATION_JSON)
-				.content("{\"id\":\"99\",\"name\":\"Unknown\"}")).andExpect(status().isNotFound());
+	    mockMvc.perform(put("/api/flight/flights/FL123")
+	            .contentType(MediaType.APPLICATION_JSON)
+	            .content("{\"fromPlace\":\"HYD\",\"toPlace\":\"DEL\",\"airlineId\":\"AI001\","
+	                   + "\"arrivalTime\":\"2025-12-15T10:00:00\","
+	                   + "\"departureTime\":\"2025-12-15T07:00:00\","
+	                   + "\"availableSeats\":100,"
+	                   + "\"price\":{\"oneWay\":100,\"roundTrip\":200}}"))
+	        .andExpect(status().isOk());
 	}
+
+
+	@Test
+	void testUpdateFlightEndpointNotFound() throws Exception {
+		when(flightService.updateFlight(eq("FL999"), any(Flight.class))).thenReturn(ResponseEntity.notFound().build());
+
+		mockMvc.perform(
+				put("/flights/FL999").contentType(MediaType.APPLICATION_JSON).content("{\"airlineId\":\"AI001\"}"))
+				.andExpect(status().isNotFound());
+	}
+
 	@Test
 	void testGetFlightById_Success() throws Exception {
 		Flight flight = new Flight();
@@ -88,8 +96,9 @@ class FlightControllerTest {
 		when(flightService.getFlightById("1")).thenReturn(ResponseEntity.ok(flight));
 
 		mockMvc.perform(get("/api/flight/get/1")).andExpect(status().isOk());
-				
+
 	}
+
 	@Test
 	void testGetFlightById_NotFound() throws Exception {
 		when(flightService.getFlightById("99")).thenReturn(ResponseEntity.notFound().build());
@@ -107,7 +116,7 @@ class FlightControllerTest {
 		when(flightService.getFlights()).thenReturn(List.of(flight));
 
 		mockMvc.perform(get("/api/flight/get/flights")).andExpect(status().isOk());
-				
+
 	}
 
 }

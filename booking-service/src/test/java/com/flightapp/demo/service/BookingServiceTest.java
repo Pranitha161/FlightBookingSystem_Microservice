@@ -329,5 +329,65 @@ class BookingServiceTest {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
 		assertThat(response.getBody()).contains("Flight service unavailable");
 	}
+	@Test
+	void testBookTicketFlightNotFound() {
+	    Booking booking = new Booking();
+	    booking.setSeatNumbers(Arrays.asList("1A"));
+
+	    when(flightClient.getFlightById("FL123"))
+	        .thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+
+	    ResponseEntity<String> response = bookingService.bookTicket("FL123", booking);
+
+	    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+	    assertThat(response.getBody()).contains("Flight not found");
+	}
+
+	@Test
+	void testBookTicketSeatsNotFound() {
+	    Booking booking = new Booking();
+	    booking.setSeatNumbers(Arrays.asList("1A"));
+
+	    Flight flight = new Flight();
+	    flight.setId("FL123");
+	    flight.setPrice(new Price(100f, 200f));
+
+	    when(flightClient.getFlightById("FL123")).thenReturn(ResponseEntity.ok(flight));
+	    when(flightClient.getSeatsByFlightId("FL123"))
+	        .thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+
+	    ResponseEntity<String> response = bookingService.bookTicket("FL123", booking);
+
+	    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+	    assertThat(response.getBody()).contains("Seats not found");
+	}
+
+	@Test
+	void testBookTicketRoundTripPrice() {
+	    Booking booking = new Booking();
+	    booking.setSeatNumbers(Arrays.asList("1A"));
+	    booking.setTripType(TRIP_TYPE.ROUND_TRIP);
+
+	    Flight flight = new Flight();
+	    flight.setId("FL123");
+	    flight.setAvailableSeats(5);
+	    Price price = new Price();
+	    price.setOneWay(100f);
+	    price.setRoundTrip(200f);
+	    flight.setPrice(price);
+
+	    Seat seat = new Seat();
+	    seat.setSeatNumber("1A");
+	    seat.setAvailable(true);
+
+	    when(flightClient.getFlightById("FL123")).thenReturn(ResponseEntity.ok(flight));
+	    when(flightClient.getSeatsByFlightId("FL123")).thenReturn(ResponseEntity.ok(Arrays.asList(seat)));
+
+	    ResponseEntity<String> response = bookingService.bookTicket("FL123", booking);
+
+	    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+	    assertThat(booking.getTotalAmount()).isEqualTo(200f);
+	}
+
 
 }
