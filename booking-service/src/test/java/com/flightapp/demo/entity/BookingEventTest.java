@@ -11,6 +11,7 @@ public class BookingEventTest {
 	void teastSeatGettersandSetters() {
 		BookingEvent booking = new BookingEvent();
 		booking.setType("BOOKED");
+		booking.setBookingId("123");
 		assertEquals("BOOKED", booking.getType());
 	}
 
