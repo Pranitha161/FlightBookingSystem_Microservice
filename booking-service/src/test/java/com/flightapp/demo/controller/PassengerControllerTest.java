@@ -31,7 +31,7 @@ import com.flightapp.demo.repository.PassengerRepository;
 import com.flightapp.demo.service.PassengerService;
 
 @WebMvcTest(PassengerController.class)
-public class PassengerControllerTest {
+class PassengerControllerTest {
 	@Autowired
 	MockMvc mockMvc;
 	@MockBean

@@ -20,7 +20,7 @@ import com.flightapp.demo.entity.Booking;
 import com.flightapp.demo.service.BookingService;
 
 @WebMvcTest(BookingController.class)
-public class BookingControllerTest {
+class BookingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

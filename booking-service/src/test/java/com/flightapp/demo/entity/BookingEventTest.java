@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
 
-public class BookingEventTest {
+class BookingEventTest {
 	@Test
 	void teastSeatGettersandSetters() {
 		BookingEvent booking = new BookingEvent();
