@@ -178,4 +178,156 @@ class BookingServiceTest {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
 		assertThat(response.getBody()).contains("Passenger IDs invalid");
 	}
+
+	@Test
+	void testDeleteBookingFlightNotFound() {
+		Booking booking = new Booking();
+		booking.setPnr("PNR123");
+		booking.setFlightId("FL123");
+		booking.setSeatNumbers(Arrays.asList("1A"));
+
+		when(bookingRepo.findByPnr("PNR123")).thenReturn(Optional.of(booking));
+		when(flightClient.getFlightById("FL123")).thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+
+		ResponseEntity<String> response = bookingService.deleteBookingByPnr("PNR123");
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+		assertThat(response.getBody()).contains("Flight not found");
+	}
+
+	@Test
+	void testDeleteBookingSeatsNotFound() {
+		Booking booking = new Booking();
+		booking.setPnr("PNR123");
+		booking.setFlightId("FL123");
+
+		Flight flight = new Flight();
+		flight.setId("FL123");
+
+		when(bookingRepo.findByPnr("PNR123")).thenReturn(Optional.of(booking));
+		when(flightClient.getFlightById("FL123")).thenReturn(ResponseEntity.ok(flight));
+		when(flightClient.getSeatsByFlightId("FL123")).thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+
+		ResponseEntity<String> response = bookingService.deleteBookingByPnr("PNR123");
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+		assertThat(response.getBody()).contains("Seats not found");
+	}
+
+	@Test
+	void testBookTicketNoSeatsRequested() {
+		Booking booking = new Booking();
+		booking.setSeatNumbers(Collections.emptyList());
+
+		ResponseEntity<String> response = bookingService.bookTicket("FL123", booking);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+		assertThat(response.getBody()).contains("No seats requested");
+	}
+
+	@Test
+	void testBookTicketSeatDoesNotExist() {
+		Booking booking = new Booking();
+		booking.setSeatNumbers(Arrays.asList("99Z"));
+		booking.setTripType(TRIP_TYPE.ONE_WAY);
+
+		Flight flight = new Flight();
+		flight.setId("FL123");
+		flight.setAvailableSeats(10);
+		Price price = new Price();
+		price.setOneWay(100f);
+		flight.setPrice(price);
+
+		Seat seat = new Seat();
+		seat.setSeatNumber("1A");
+		seat.setAvailable(true);
+
+		when(flightClient.getFlightById("FL123")).thenReturn(ResponseEntity.ok(flight));
+		when(flightClient.getSeatsByFlightId("FL123")).thenReturn(ResponseEntity.ok(Arrays.asList(seat)));
+
+		ResponseEntity<String> response = bookingService.bookTicket("FL123", booking);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+		assertThat(response.getBody()).contains("does not exist");
+	}
+
+	@Test
+	void testBookTicketSeatAlreadyBooked() {
+		Booking booking = new Booking();
+		booking.setSeatNumbers(Arrays.asList("1A"));
+		booking.setTripType(TRIP_TYPE.ONE_WAY);
+
+		Flight flight = new Flight();
+		flight.setId("FL123");
+		flight.setAvailableSeats(10);
+		Price price = new Price();
+		price.setOneWay(100f);
+		flight.setPrice(price);
+
+		Seat seat = new Seat();
+		seat.setSeatNumber("1A");
+		seat.setAvailable(false);
+
+		when(flightClient.getFlightById("FL123")).thenReturn(ResponseEntity.ok(flight));
+		when(flightClient.getSeatsByFlightId("FL123")).thenReturn(ResponseEntity.ok(Arrays.asList(seat)));
+
+		ResponseEntity<String> response = bookingService.bookTicket("FL123", booking);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+		assertThat(response.getBody()).contains("already booked");
+	}
+
+	@Test
+	void testBookTicketInsufficientSeats() {
+		Booking booking = new Booking();
+		booking.setSeatNumbers(Arrays.asList("1A", "1B"));
+		booking.setTripType(TRIP_TYPE.ONE_WAY);
+
+		Flight flight = new Flight();
+		flight.setId("FL123");
+		flight.setAvailableSeats(1); // not enough seats
+		Price price = new Price();
+		price.setOneWay(100f);
+		flight.setPrice(price);
+
+		Seat seat1 = new Seat();
+		seat1.setSeatNumber("1A");
+		seat1.setAvailable(true);
+		Seat seat2 = new Seat();
+		seat2.setSeatNumber("1B");
+		seat2.setAvailable(true);
+
+		when(flightClient.getFlightById("FL123")).thenReturn(ResponseEntity.ok(flight));
+		when(flightClient.getSeatsByFlightId("FL123")).thenReturn(ResponseEntity.ok(Arrays.asList(seat1, seat2)));
+
+		ResponseEntity<String> response = bookingService.bookTicket("FL123", booking);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+		assertThat(response.getBody()).contains("Insufficient seats");
+	}
+
+	
+	@Test
+	void testFallbackDeleteBookingServiceUnavailable() {
+		ResponseEntity<String> response = bookingService.fallbackDeleteBooking("PNR123", new RuntimeException("error"));
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+		assertThat(response.getBody()).contains("Flight service unavailable");
+	}
+	@Test
+	void testFallbackDeleteBookingNotFound() {
+	    feign.FeignException notFound = mock(feign.FeignException.NotFound.class);
+
+	    ResponseEntity<String> response = bookingService.fallbackDeleteBooking("PNR123", notFound);
+
+	    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+	    assertThat(response.getBody()).contains("Flight not found");
+	}
+	@Test
+	void testFallbackGetFlight() {
+		ResponseEntity<String> response = bookingService.fallbackGetFlight("FL123", new Booking(),
+				new RuntimeException("error"));
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+		assertThat(response.getBody()).contains("Flight service unavailable");
+	}
+
 }
