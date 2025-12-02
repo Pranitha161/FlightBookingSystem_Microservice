@@ -18,7 +18,16 @@ public class BookingEventTest {
 	void testDefaultValues() {
 		BookingEvent booking = new BookingEvent();
 		assertNotNull(booking);
-//		assertNull(booking.getPayload());
+		assertNull(booking.getBooking());
+		assertNull(booking.getType());
+
+	}
+	@Test
+	void testWithBookinId() {
+		BookingEvent booking = new BookingEvent();
+		booking.setBookingId("1");
+		assertNotNull(booking);
+		assertEquals("1",booking.getBookingId());
 		assertNull(booking.getType());
 
 	}

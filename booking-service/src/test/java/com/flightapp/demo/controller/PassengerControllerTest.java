@@ -11,8 +11,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -22,7 +25,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightapp.demo.entity.Passenger;
+import com.flightapp.demo.repository.PassengerRepository;
 import com.flightapp.demo.service.PassengerService;
 
 @WebMvcTest(PassengerController.class)
@@ -33,6 +38,8 @@ public class PassengerControllerTest {
 	private PassengerService passengerService;
 	@InjectMocks
 	private PassengerController passengerController;
+	@Mock
+	private PassengerRepository passengerRepo;
 
 	@Test
 	void testGetPassengerByIdSuccess() throws Exception {
@@ -107,5 +114,19 @@ public class PassengerControllerTest {
 		mockMvc.perform(delete("/api/passenger/delete/{passengerId}", "123")).andExpect(status().isNotFound());
 	}
 
-	
+	@Test
+	void testUpdatePassenger_Success() throws Exception {
+		Passenger passenger = new Passenger();
+		passenger.setId("123");
+		passenger.setAge(22);
+		passenger.setEmail("pranitha@example.com");
+		passenger.setName("Pranitha");
+		when(passengerService.updateById(eq("123"), any(Passenger.class))).thenReturn(ResponseEntity.ok(passenger));
+		mockMvc.perform(
+				post("/api/passenger/update/{passengerId}", "123").contentType(MediaType.APPLICATION_JSON).content(
+						"{\"id\":\"123\",\"name\":\"Pranitha\",\"gender\":\"Female\",\"age\":23,\"email\":\"pranitha@example.com\"}"))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.name").value("Pranitha"))
+				.andExpect(jsonPath("$.email").value("pranitha@example.com")).andExpect(jsonPath("$.age").value(22));
+	}
+
 }
