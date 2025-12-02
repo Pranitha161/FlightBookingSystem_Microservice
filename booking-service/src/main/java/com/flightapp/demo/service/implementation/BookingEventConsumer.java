@@ -29,7 +29,7 @@ public class BookingEventConsumer {
             mailSender.send(message);
         } catch (Exception e) {
             System.err.println("Error in consumer: " + e.getMessage());
-            e.printStackTrace();
+//            e.printStackTrace();
         }
     }
 

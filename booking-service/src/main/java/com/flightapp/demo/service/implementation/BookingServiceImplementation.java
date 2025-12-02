@@ -109,11 +109,10 @@ public class BookingServiceImplementation implements BookingService {
 				: flight.getPrice().getOneWay();
 		booking.setTotalAmount(price);
 		booking.setFlightId(flightId);
-		System.out.println(booking.getPassengerIds());
+		
 		if (booking.getPassengerIds() != null && !booking.getPassengerIds().isEmpty()) {
 			List<Passenger> passengers = passengerRepo.findAllById(booking.getPassengerIds());
 			if (passengers.isEmpty()) {
-				System.out.println(passengers);
 				return ResponseEntity.unprocessableEntity().body("Passenger IDs invalid");
 			}
 			passengerRepo.saveAll(passengers);
