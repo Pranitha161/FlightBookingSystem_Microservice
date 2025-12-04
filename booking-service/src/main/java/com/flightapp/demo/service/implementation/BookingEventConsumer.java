@@ -25,7 +25,12 @@ public class BookingEventConsumer {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(booking.getEmail());
             message.setSubject("Booking Update: " + event.getType());
-            message.setText("Hello, Your booking for flight " + booking.getFlightId() + " has been confirmed.");
+            String body;
+            if(event.getType()=="BOOKING_CREATED")
+            body="Hello, Your booking for flight " + booking.getFlightId() + " has been confirmed.\n PNR - "+booking.getPnr();
+            else
+            	body="Hello, Your booking for flight "+booking.getFlightId()+" has been cancelled";
+            message.setText(body);
             mailSender.send(message);
         } catch (Exception e) {
             System.err.println("Error in consumer: " + e.getMessage());
