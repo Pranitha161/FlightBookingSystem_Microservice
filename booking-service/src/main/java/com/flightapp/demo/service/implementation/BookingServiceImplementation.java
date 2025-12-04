@@ -20,6 +20,7 @@ import com.flightapp.demo.repository.PassengerRepository;
 import com.flightapp.demo.service.BookingEventService;
 import com.flightapp.demo.service.BookingService;
 
+import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 
@@ -75,11 +76,9 @@ public class BookingServiceImplementation implements BookingService {
 
 	public ResponseEntity<String> fallbackDeleteBooking(String pnr, Throwable t) {
 		if (t instanceof feign.FeignException.NotFound) {
-
 			return ResponseEntity.status(HttpStatus.NOT_FOUND)
 					.body("Flight not found while deleting booking with PNR: " + pnr);
 		}
-
 		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
 				.body("Flight service unavailable while deleting booking with PNR: " + pnr);
 	}
@@ -141,8 +140,17 @@ public class BookingServiceImplementation implements BookingService {
 	}
 
 	public ResponseEntity<String> fallbackGetFlight(String flightId, Booking booking, Throwable t) {
-		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-				.body("Flight service unavailable while booking flightId: " + flightId);
+		System.out.println(t.getMessage());
+		if (t instanceof FeignException.NotFound) {
+	        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+	                .body("Flight not found with id: " + flightId);
+	    } else if (t instanceof FeignException.ServiceUnavailable) {
+	        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+	                .body("Flight service unavailable while booking flightId: " + flightId);
+	    } else {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                .body("Unexpected error while booking flightId: " + flightId);
+	    }
 	}
 
 }
