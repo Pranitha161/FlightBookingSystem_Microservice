@@ -1,7 +1,9 @@
 package com.flightapp.demo.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,8 +25,6 @@ import com.flightapp.demo.entity.Price;
 import com.flightapp.demo.entity.SearchRequest;
 import com.flightapp.demo.repository.AirlineRepository;
 import com.flightapp.demo.repository.FlightRepository;
-import com.flightapp.demo.service.AirLineService;
-import com.flightapp.demo.service.SeatService;
 import com.flightapp.demo.service.implementation.FlightServiceImplementation;
 
 @ExtendWith(MockitoExtension.class)

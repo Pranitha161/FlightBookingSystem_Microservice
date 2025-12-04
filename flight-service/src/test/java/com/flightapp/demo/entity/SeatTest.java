@@ -3,7 +3,7 @@ package com.flightapp.demo.entity;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
-public class SeatTest {
+class SeatTest {
 
 	@Test
 	void testSeatAvailability() {
