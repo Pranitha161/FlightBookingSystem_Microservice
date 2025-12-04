@@ -49,6 +49,13 @@ public class BookingServiceImplementation implements BookingService {
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Flight not found for booking PNR: " + pnr);
 			}
 			Flight flight = flightResponse.getBody();
+			LocalDateTime now = LocalDateTime.now();
+			LocalDateTime departure = flight.getDepartureTime();
+			if (departure.isBefore(now.plusHours(24))) {
+			    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+			        .body("Cannot delete booking within 24 hours of departure for PNR: " + pnr);
+			}
+
 			ResponseEntity<List<Seat>> seatResponse = flightClient.getSeatsByFlightId(booking.getFlightId());
 			if (!seatResponse.getStatusCode().is2xxSuccessful() || seatResponse.getBody() == null) {
 				return ResponseEntity.status(HttpStatus.NOT_FOUND)
