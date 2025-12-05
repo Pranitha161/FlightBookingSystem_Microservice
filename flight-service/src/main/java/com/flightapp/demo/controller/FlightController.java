@@ -29,7 +29,7 @@ public class FlightController {
 		return flightService.search(searchRequest);
 	}
 	@PostMapping("/add")
-	public  ResponseEntity<Void> addInventory(@Valid @RequestBody Flight flight){
+	public  ResponseEntity<String> addInventory(@Valid @RequestBody Flight flight){
 		return flightService.addFlight(flight);
 	}
 	@PutMapping("flights/{id}")

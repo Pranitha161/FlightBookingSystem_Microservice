@@ -79,7 +79,7 @@ class FlightServiceTest {
 		flight.setAvailableSeats(12);
 		when(airlineRepo.findById("A1")).thenReturn(Optional.of(new com.flightapp.demo.entity.Airline()));
 		when(flightRepo.save(flight)).thenReturn(flight);
-		ResponseEntity<Void> response = flightService.addFlight(flight);
+		ResponseEntity<String> response = flightService.addFlight(flight);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		verify(seatService).initialiszeSeats("F1", 2, 6);
 		verify(airlineService).addFlightToAirline("A1", "F1");
@@ -90,7 +90,7 @@ class FlightServiceTest {
 		Flight flight = new Flight();
 		flight.setAirlineId("A1");
 		flight.setAvailableSeats(5); 
-		ResponseEntity<Void> response = flightService.addFlight(flight);
+		ResponseEntity<String> response = flightService.addFlight(flight);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 		verifyNoInteractions(seatService, airlineService);
 	}

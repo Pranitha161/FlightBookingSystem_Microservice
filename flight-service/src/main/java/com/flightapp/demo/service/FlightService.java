@@ -11,7 +11,7 @@ public interface FlightService {
 
 	ResponseEntity<List<Flight>> search(SearchRequest searchRequest);
 
-	ResponseEntity<Void> addFlight(Flight flightTest);
+	ResponseEntity<String> addFlight(Flight flightTest);
 
 	List<Flight> getFlights();
 

@@ -2,6 +2,7 @@ package com.flightapp.demo.service.implementation;
 
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,7 @@ public class FlightServiceImplementation implements FlightService {
 	private final SeatService seatService;
 	private final AirLineService airlineService;
 
-	@Override // Mono because we want to send only one https response for entire request
+	@Override 
 	public ResponseEntity<List<Flight>> search(SearchRequest searchRequest) {
 	    List<Flight> flightTests = flightRepo.getFightByFromPlaceAndToPlace(
 	            searchRequest.getFromPlace(),
@@ -46,10 +47,14 @@ public class FlightServiceImplementation implements FlightService {
 	}
 
 	@Override
-	public ResponseEntity<Void> addFlight(Flight flightTest) {
+	public ResponseEntity<String> addFlight(Flight flightTest) {
 	    final int cols = 6;
 	    if (flightTest.getAvailableSeats() <= 0 || flightTest.getAvailableSeats() % cols != 0) {
-	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Seats should not be negative or divisible of 6");
+	    }
+	    Optional<Flight> flight=flightRepo.findByAirlineIdAndFromPlaceAndToPlaceAndArrivalTimeAndDepartureTime(flightTest.getAirlineId(), flightTest.getFromPlace(), flightTest.getToPlace(), flightTest.getArrivalTime(), flightTest.getDepartureTime());
+	    if(flight.isPresent()) {
+	    	return ResponseEntity.status(HttpStatus.CONFLICT).body("Flight is already present");
 	    }
 	    final int rows = flightTest.getAvailableSeats() / cols;
 	    return airlineRepo.findById(flightTest.getAirlineId())
@@ -57,9 +62,9 @@ public class FlightServiceImplementation implements FlightService {
 	            Flight savedFlight = flightRepo.save(flightTest);
 	            seatService.initialiszeSeats(savedFlight.getId(), rows, cols);
 	            airlineService.addFlightToAirline(savedFlight.getAirlineId(), savedFlight.getId());
-	            return ResponseEntity.status(HttpStatus.CREATED).<Void>build();
+	            return ResponseEntity.status(HttpStatus.CREATED).body("Sucessfully created");
 	        })
-	        .orElse(ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
+	        .orElse(ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bad request"));
 	}
 
 
